@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Features\Customer\Commands\" />
+    <Folder Include="Features\Customer\Models\" />
+    <Folder Include="Features\Customer\Queries\" />
+    <Folder Include="Behaviors\" />
+  </ItemGroup>
+	
+	<ItemGroup>
+		<ProjectReference Include="..\Domain\Domain.csproj" />
+	</ItemGroup>
+	
+</Project>
