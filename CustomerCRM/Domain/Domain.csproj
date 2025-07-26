@@ -6,4 +6,18 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Aggregates\Customer\" />
+    <Folder Include="Aggregates\Entities\" />
+    <Folder Include="Aggregates\Events\" />
+    <Folder Include="Aggregates\Specifications\" />
+    <Folder Include="Aggregates\Services\" />
+    <Folder Include="Aggregates\Rules\" />
+    <Folder Include="Aggregates\ValueObjects\" />
+    <Folder Include="SharedKernel\" />
+    <Folder Include="SeedWork\Events\" />
+    <Folder Include="SeedWork\Specification\" />
+    <Folder Include="SeedWork\Primitives\" />
+  </ItemGroup>
+
 </Project>
