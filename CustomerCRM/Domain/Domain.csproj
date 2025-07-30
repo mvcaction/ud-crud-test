@@ -7,17 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Aggregates\Customer\" />
-    <Folder Include="Aggregates\Entities\" />
-    <Folder Include="Aggregates\Events\" />
-    <Folder Include="Aggregates\Specifications\" />
-    <Folder Include="Aggregates\Services\" />
-    <Folder Include="Aggregates\Rules\" />
-    <Folder Include="Aggregates\ValueObjects\" />
+    <Folder Include="Aggregates\Customer\Entities\" />
+    <Folder Include="Aggregates\Customer\Specifications\" />
     <Folder Include="SharedKernel\" />
     <Folder Include="SeedWork\Events\" />
     <Folder Include="SeedWork\Specification\" />
-    <Folder Include="SeedWork\Primitives\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="13.0.0" />
+	<PackageReference Include="MediatR.Contracts" Version="2.0.1" />
+	  
   </ItemGroup>
 
 </Project>

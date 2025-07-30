@@ -7,14 +7,38 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Persistence\Context\" />
-    <Folder Include="Persistence\EntityConfiguration\" />
-    <Folder Include="Persistence\Repositories\" />
+    <!-- Entity Framework Core packages for .NET 9 -->
+    <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.7">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.7">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    
+    <!-- PostgreSQL packages - استفاده از نسخه‌های موجود -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+    <PackageReference Include="Npgsql" Version="9.0.3" />
+
+    <!-- MediatR for domain events -->
+    <PackageReference Include="MediatR" Version="13.0.0" />
+
+    <!-- Configuration and Dependency Injection -->
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.7" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.7" />
   </ItemGroup>
 	
-	<ItemGroup>
-		<ProjectReference Include="..\Application\Application.csproj" />
-		<ProjectReference Include="..\Domain\Domain.csproj" />
-	</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Application\Application.csproj" />
+    <ProjectReference Include="..\Domain\Domain.csproj" />
+  </ItemGroup>
+	
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+    <Folder Include="Persistence\Migrations\" />
+  </ItemGroup>
 	
 </Project>
