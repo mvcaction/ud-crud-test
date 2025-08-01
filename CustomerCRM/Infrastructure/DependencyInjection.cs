@@ -3,11 +3,13 @@ using Domain.Aggregates.Customer.Services;
 using Infrastructure.Persistence;
 using Infrastructure.Persistence.Context;
 using Infrastructure.Persistence.Repositories;
+using Infrastructure.Resilience;
 using Infrastructure.Services;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http;
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure;
 
@@ -19,6 +21,7 @@ public static class DependencyInjection
     {
         services.AddPersistence(configuration);
         services.AddServices();
+        services.AddResilience(configuration);
         
         return services;
     }
@@ -36,7 +39,7 @@ public static class DependencyInjection
             {
                 npgsqlOptions.MigrationsAssembly(typeof(CrmDbContext).Assembly.FullName);
                 
-                // PostgreSQL retry configuration ?? error codes
+                // PostgreSQL retry configuration for transient errors
                 npgsqlOptions.EnableRetryOnFailure(
                     maxRetryCount: 3,
                     maxRetryDelay: TimeSpan.FromSeconds(5),
@@ -69,7 +72,48 @@ public static class DependencyInjection
         services.AddScoped<ICustomerUniquenessCheckerService, CustomerUniquenessCheckerService>();
         services.AddScoped<ICustomerHydrationService, CustomerHydrationService>();
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+        services.AddScoped<IExternalCustomerValidationService, ExternalCustomerValidationService>();
         
+        return services;
+    }
+
+    private static IServiceCollection AddResilience(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        // Configure resilience options - Fix the configuration binding
+        services.Configure<ResilienceOptions>(
+            configuration.GetSection(ResilienceOptions.SectionName));
+
+        // Register resilience service
+        services.AddSingleton<IResilienceService, ResilienceService>();
+
+        // Configure HttpClient with resilience policies
+        services.AddHttpClient("default", client =>
+        {
+            client.Timeout = TimeSpan.FromMinutes(2); // Overall timeout
+        })
+        .AddPolicyHandler((serviceProvider, request) =>
+        {
+            var options = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<ResilienceOptions>>().Value;
+            var logger = serviceProvider.GetRequiredService<ILogger<ResilienceService>>();
+            return HttpResiliencePolicies.GetCombinedPolicy(options, logger);
+        });
+
+        // Add specific HttpClient configurations for different services
+        services.AddHttpClient("external-api", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+            // Configure base address, headers, etc. for external APIs
+            // client.BaseAddress = new Uri("https://external-api.example.com/");
+        })
+        .AddPolicyHandler((serviceProvider, request) =>
+        {
+            var options = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<ResilienceOptions>>().Value;
+            var logger = serviceProvider.GetRequiredService<ILogger<ResilienceService>>();
+            return HttpResiliencePolicies.GetCombinedPolicy(options, logger);
+        });
+
         return services;
     }
 }

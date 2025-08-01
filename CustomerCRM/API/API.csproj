@@ -20,7 +20,13 @@
     <PackageReference Include="Serilog.Extensions.Logging" Version="9.0.2" />
     <PackageReference Include="Serilog.Settings.Configuration" Version="9.0.0" />
 	 <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.7" />
-	  
+	 
+	 <!-- Health Checks -->
+	 <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="8.0.1" />
+	 
+	 <!-- Aspire Client Packages (Correct package names for .NET 9) -->
+	 <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.0" />
+	 <PackageReference Include="Microsoft.Extensions.ServiceDiscovery" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,9 +1,9 @@
 using Application;
 using Infrastructure;
 using Infrastructure.Persistence.Context;
-using Infrastructure.Middleware; // Add this
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +32,12 @@ builder.Services.AddSwaggerGen(c =>
         c.IncludeXmlComments(xmlPath);
     }
 });
+// Configure Entity Framework Core with PostgreSQL
+// Add health checks with proper connection string priority
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("customercrm") ?? 
+               builder.Configuration.GetConnectionString("DefaultConnection") ?? 
+               "Host=localhost;Database=CustomerCRM;Username=postgres;Password=postgres123");
 
 // Add Application and Infrastructure layers
 builder.Services.AddApplication();
@@ -39,8 +45,15 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
-// Add global exception handling middleware FIRST
-//app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+// Map health check endpoints manually
+app.MapHealthChecks("/health");
+app.MapHealthChecks("/alive", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = _ => false
+});
+
+// Add global exception handling middleware FIRST in the pipeline
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 // Auto-apply migrations in development
 if (app.Environment.IsDevelopment())

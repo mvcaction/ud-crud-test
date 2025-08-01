@@ -22,6 +22,26 @@ services:
       timeout: 5s
       retries: 5
 
+  customercrm-api:
+    build:
+      context: .
+      dockerfile: API/Dockerfile
+    container_name: customercrm-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=CustomerCRM;Username=postgres;Password=postgres123;Port=5432
+    ports:
+      - "5000:8080"
+    volumes:
+      - api_logs:/app/logs
+    networks:
+      - customercrm-network
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: customercrm-pgadmin
@@ -44,6 +64,8 @@ volumes:
   postgres_data:
     driver: local
   pgadmin_data:
+    driver: local
+  api_logs:
     driver: local
 
 networks:
