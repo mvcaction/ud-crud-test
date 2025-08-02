@@ -61,7 +61,7 @@ public class CustomersControllerTests : IClassFixture<CustomWebApplicationFactor
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
-    [Fact(Skip = "Test is skipped - API currently throws exception instead of returning BadRequest")]
+    [Fact]  
     public async Task CreateCustomer_WithInvalidEmail_ShouldReturnBadRequest()
     {
         // Arrange
@@ -82,7 +82,7 @@ public class CustomersControllerTests : IClassFixture<CustomWebApplicationFactor
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = "Test is skipped - API currently throws exception instead of returning BadRequest")]
+    [Fact]
     public async Task CreateCustomer_WithEmptyFirstName_ShouldReturnBadRequest()
     {
         // Arrange

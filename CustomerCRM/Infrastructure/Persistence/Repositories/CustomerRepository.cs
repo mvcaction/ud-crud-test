@@ -211,6 +211,8 @@ internal class CustomerRepository : ICustomerRepository
             WHERE ""Id"" = @Id";
 
         using var connection = new NpgsqlConnection(_connectionString);
+        
+        // Ensure we're properly awaiting the async operation
         var rowsAffected = await connection.ExecuteAsync(sql, new
         {
             customer.Id,
@@ -224,7 +226,7 @@ internal class CustomerRepository : ICustomerRepository
             customer.UpdatedAt,
             customer.IsDeleted,
             customer.DeletedAt
-        });
+        }).ConfigureAwait(false); // Add ConfigureAwait(false) for better async behavior
 
         if (rowsAffected == 0)
         {
