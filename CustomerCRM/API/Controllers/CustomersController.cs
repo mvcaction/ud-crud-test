@@ -105,6 +105,12 @@ public class CustomersController : ControllerBase
             return NoContent();
         }
 
+        // Check if it's a "not found" error
+        if (result.Error.Contains("not found", StringComparison.OrdinalIgnoreCase))
+        {
+            return NotFound(result.Error);
+        }
+
         return BadRequest(result.Error);
     }
 
@@ -125,6 +131,12 @@ public class CustomersController : ControllerBase
             return NoContent();
         }
 
+        // Check if it's a "not found" error
+        if (result.Error.Contains("not found", StringComparison.OrdinalIgnoreCase))
+        {
+            return NotFound(result.Error);
+        }
+
         return BadRequest(result.Error);
     }
 
@@ -143,6 +155,12 @@ public class CustomersController : ControllerBase
         if (result.IsSuccess)
         {
             return NoContent();
+        }
+
+        // Check if it's a "not found" error
+        if (result.Error.Contains("not found", StringComparison.OrdinalIgnoreCase))
+        {
+            return NotFound(result.Error);
         }
 
         return BadRequest(result.Error);

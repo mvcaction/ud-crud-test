@@ -21,6 +21,10 @@
     <PackageReference Include="Serilog.Settings.Configuration" Version="9.0.0" />
 	 <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.7" />
 	 
+	 <!-- Explicit EF Core references to resolve version conflicts -->
+	 <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.7" />
+	 <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.7" />
+	 
 	 <!-- Health Checks -->
 	 <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="8.0.1" />
 	 

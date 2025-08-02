@@ -1,4 +1,5 @@
 using Domain.SeedWork.Exceptions;
+using FluentValidation;
 using System.Net;
 using System.Text.Json;
 
@@ -34,6 +35,7 @@ public class GlobalExceptionHandlingMiddleware
 
         var (statusCode, message) = exception switch
         {
+            ValidationException valEx => (HttpStatusCode.BadRequest, FormatValidationErrors(valEx)),
             BusinessRuleValidationException brEx => (HttpStatusCode.BadRequest, brEx.Details),
             ArgumentException argEx => (HttpStatusCode.BadRequest, argEx.Message),
             InvalidOperationException invOpEx => (HttpStatusCode.BadRequest, invOpEx.Message),
@@ -62,5 +64,16 @@ public class GlobalExceptionHandlingMiddleware
         });
 
         await context.Response.WriteAsync(jsonResponse);
+    }
+
+    private static string FormatValidationErrors(ValidationException validationException)
+    {
+        var errors = validationException.Errors
+            .Select(error => $"{error.PropertyName}: {error.ErrorMessage}")
+            .ToList();
+
+        return errors.Count == 1 
+            ? errors.First() 
+            : $"Validation failed: {string.Join("; ", errors)}";
     }
 }

@@ -57,6 +57,9 @@ public class UpdateCustomerCommandHandler : IRequestHandler<UpdateCustomerComman
             if (!customer.BankAccountNumber.Equals(bankAccountNumber))
                 customer.ChangeBankAccountNumber(bankAccountNumber);
 
+            // Explicitly update the customer in the repository
+            _customerRepository.Update(customer);
+
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success();
