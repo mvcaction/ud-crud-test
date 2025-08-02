@@ -1,8 +1,6 @@
-﻿using Application.Common;
-using Application.Features.Customer.Abstractions;
+﻿using Application.Features.Customer.Abstractions;
 using Application.Features.Customer.Commands.CreateCustomer;
 using Domain.Aggregates.Customer.Services;
-using Domain.SeedWork.Exceptions;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
