@@ -1,54 +1,32 @@
 using Application.Features.Customer.Abstractions;
-using Domain.SeedWork.Primitives;
-using Infrastructure.Persistence.Context;
-using MediatR;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Persistence;
 
 internal class UnitOfWork : IUnitOfWork
 {
-    private readonly CrmDbContext _context;
-    private readonly IMediator _mediator;
+    private readonly ILogger<UnitOfWork> _logger;
 
-    public UnitOfWork(CrmDbContext context, IMediator mediator)
+    public UnitOfWork(ILogger<UnitOfWork> logger)
     {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
-        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        // Dispatch domain events before saving
-        await DispatchDomainEventsAsync(cancellationToken);
-        
-        // Save changes to database
-        await _context.SaveChangesAsync(cancellationToken);
-    }
-
-    private async Task DispatchDomainEventsAsync(CancellationToken cancellationToken)
-    {
-        // Get all entities that implement IAggregateRoot and have domain events
-        var domainEntities = _context.ChangeTracker
-            .Entries<IAggregateRoot>()
-            .Where(x => x.Entity.DomainEvents.Any())
-            .Select(x => x.Entity)
-            .ToList();
-
-        var domainEvents = domainEntities
-            .SelectMany(x => x.DomainEvents)
-            .ToList();
-
-        // Clear domain events from entities
-        foreach (var entity in domainEntities)
+        try
         {
-            entity.ClearDomainEvents();
+            // Since we're using Dapper, the actual save operations happen in the repositories
+            // This method can be used for cross-cutting concerns like transaction management
+            // For now, it's a no-op since Dapper executes commands immediately
+            await Task.CompletedTask;
+            
+            _logger.LogDebug("Unit of work save changes completed");
         }
-
-        // Publish all domain events
-        foreach (var domainEvent in domainEvents)
+        catch (Exception ex)
         {
-            await _mediator.Publish(domainEvent, cancellationToken);
+            _logger.LogError(ex, "Error during unit of work save changes");
+            throw;
         }
     }
 }

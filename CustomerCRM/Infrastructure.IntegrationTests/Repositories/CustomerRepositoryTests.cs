@@ -7,7 +7,6 @@ using Infrastructure.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Xunit;
 using CustomerAggregate = Domain.Aggregates.Customer.Customer;
 
@@ -34,6 +33,9 @@ public class CustomerRepositoryTests : IClassFixture<PostgreSqlTestContainer>, I
                 new KeyValuePair<string, string?>("ConnectionStrings:DefaultConnection", _testContainer.ConnectionString)
             })
             .Build();
+
+        // Register the configuration as a singleton service
+        services.AddSingleton<IConfiguration>(configuration);
 
         // Use the Infrastructure extension method which registers all services correctly
         services.AddInfrastructure(configuration);
@@ -286,13 +288,13 @@ public class CustomerRepositoryTests : IClassFixture<PostgreSqlTestContainer>, I
 
         // Act & Assert
         await _repository.AddAsync(customer1);
-        await _context.SaveChangesAsync(); // First customer should save successfully
+        // First customer should save successfully since Dapper executes immediately
 
-        await _repository.AddAsync(customer2);
-        
-        // This should throw due to database constraint
-        var action = async () => await _context.SaveChangesAsync();
-        await action.Should().ThrowAsync<DbUpdateException>();
+        // This should throw due to database constraint when trying to add the second customer
+        // Since we're using Dapper repository, expect PostgresException instead of DbUpdateException
+        var action = async () => await _repository.AddAsync(customer2);
+        await action.Should().ThrowAsync<Npgsql.PostgresException>()
+            .Where(ex => ex.SqlState == "23505"); // 23505 is the PostgreSQL error code for unique violation
     }
 
     private async Task<CustomerAggregate> CreateTestCustomerAsync(string? specificEmail = null)

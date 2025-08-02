@@ -27,6 +27,9 @@ public class DeleteCustomerCommandHandler : IRequestHandler<DeleteCustomerComman
                 return Result.Failure("Customer not found");
 
             customer.Delete();
+            
+            _customerRepository.Update(customer);
+            
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success();

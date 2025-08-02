@@ -27,6 +27,10 @@ public class RestoreCustomerCommandHandler : IRequestHandler<RestoreCustomerComm
                 return Result.Failure("Customer not found");
 
             customer.Restore();
+            
+            // Add this missing line to persist the restore operation
+            _customerRepository.Update(customer);
+            
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success();

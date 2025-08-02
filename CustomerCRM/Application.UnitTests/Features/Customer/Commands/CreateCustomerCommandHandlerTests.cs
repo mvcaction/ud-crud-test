@@ -4,6 +4,7 @@ using Application.Features.Customer.Commands.CreateCustomer;
 using Domain.Aggregates.Customer.Services;
 using Domain.SeedWork.Exceptions;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using CustomerAggregate = Domain.Aggregates.Customer.Customer;
@@ -16,6 +17,7 @@ public class CreateCustomerCommandHandlerTests
     private readonly Mock<ICustomerUniquenessCheckerService> _mockUniquenessChecker;
     private readonly Mock<IDateTimeProvider> _mockDateTimeProvider;
     private readonly Mock<IUnitOfWork> _mockUnitOfWork;
+    private readonly Mock<ILogger<CreateCustomerCommandHandler>> _mockLogger;
     private readonly CreateCustomerCommandHandler _handler;
 
     public CreateCustomerCommandHandlerTests()
@@ -24,12 +26,14 @@ public class CreateCustomerCommandHandlerTests
         _mockUniquenessChecker = new Mock<ICustomerUniquenessCheckerService>();
         _mockDateTimeProvider = new Mock<IDateTimeProvider>();
         _mockUnitOfWork = new Mock<IUnitOfWork>();
+        _mockLogger = new Mock<ILogger<CreateCustomerCommandHandler>>();
 
         _handler = new CreateCustomerCommandHandler(
             _mockRepository.Object,
+            _mockUnitOfWork.Object,
             _mockUniquenessChecker.Object,
             _mockDateTimeProvider.Object,
-            _mockUnitOfWork.Object);
+            _mockLogger.Object);
 
         _mockDateTimeProvider.Setup(x => x.UtcNow)
             .Returns(new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc));

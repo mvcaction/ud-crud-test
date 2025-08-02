@@ -1,30 +1,49 @@
 using Domain.Aggregates.Customer.Services;
-using Infrastructure.Persistence.Context;
-using Microsoft.EntityFrameworkCore;
+using Dapper;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Npgsql;
 
 namespace Infrastructure.Services;
 
 public class CustomerUniquenessCheckerService : ICustomerUniquenessCheckerService
 {
-    private readonly CrmDbContext _context;
+    private readonly string _connectionString;
+    private readonly ILogger<CustomerUniquenessCheckerService> _logger;
 
-    public CustomerUniquenessCheckerService(CrmDbContext context)
+    public CustomerUniquenessCheckerService(
+        IConfiguration configuration,
+        ILogger<CustomerUniquenessCheckerService> logger)
     {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _connectionString = configuration.GetConnectionString("DefaultConnection")
+            ?? throw new ArgumentNullException("Connection string not found");
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<bool> IsEmailTaken(string email, Guid? excludeCustomerId = null)
     {
-        // Use client evaluation by loading customers first then filtering in memory
-        var customers = await _context.Customers
-            .IgnoreQueryFilters()
-            .AsNoTracking() // For better performance
-            .ToListAsync();
+        try
+        {
+            var sql = @"
+                SELECT COUNT(1) 
+                FROM ""Customers"" 
+                WHERE ""Email"" = @Email 
+                AND (@ExcludeCustomerId IS NULL OR ""Id"" != @ExcludeCustomerId)";
 
-        // Now filter in memory where Email.ToString() works
-        return customers.Any(c =>
-            c.Email.ToString() == email &&
-            (!excludeCustomerId.HasValue || c.Id != excludeCustomerId.Value));
+            using var connection = new NpgsqlConnection(_connectionString);
+            var count = await connection.QuerySingleAsync<int>(sql, new
+            {
+                Email = email,
+                ExcludeCustomerId = excludeCustomerId
+            });
+
+            return count > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking email uniqueness for {Email}", email);
+            throw;
+        }
     }
 
     public async Task<bool> IsPersonalInfoTaken(
@@ -33,16 +52,31 @@ public class CustomerUniquenessCheckerService : ICustomerUniquenessCheckerServic
         DateTime dateOfBirth,
         Guid? excludeCustomerId = null)
     {
-        // Use client evaluation for this query too for consistency
-        var customers = await _context.Customers
-            .IgnoreQueryFilters()
-            .AsNoTracking()
-            .ToListAsync();
+        try
+        {
+            var sql = @"
+                SELECT COUNT(1) 
+                FROM ""Customers"" 
+                WHERE ""FirstName"" = @FirstName 
+                AND ""LastName"" = @LastName 
+                AND ""DateOfBirth"" = @DateOfBirth
+                AND (@ExcludeCustomerId IS NULL OR ""Id"" != @ExcludeCustomerId)";
 
-        return customers.Any(c =>
-            c.FirstName.ToString() == firstName &&
-            c.LastName.ToString() == lastName &&
-            c.DateOfBirth.Value == dateOfBirth &&
-            (!excludeCustomerId.HasValue || c.Id != excludeCustomerId.Value));
+            using var connection = new NpgsqlConnection(_connectionString);
+            var count = await connection.QuerySingleAsync<int>(sql, new
+            {
+                FirstName = firstName,
+                LastName = lastName,
+                DateOfBirth = dateOfBirth,
+                ExcludeCustomerId = excludeCustomerId
+            });
+
+            return count > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking personal info uniqueness for {FirstName} {LastName}", firstName, lastName);
+            throw;
+        }
     }
 }

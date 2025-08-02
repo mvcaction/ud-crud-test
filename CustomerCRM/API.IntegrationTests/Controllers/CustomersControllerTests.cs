@@ -172,14 +172,15 @@ public class CustomersControllerTests : IClassFixture<CustomWebApplicationFactor
     [Fact]
     public async Task DeleteCustomer_ThenGet_ShouldReturnNotFound()
     {
-        // Arrange - Create a customer first
+        // Arrange - Create a customer first with unique data
+        var randomId = Guid.NewGuid().ToString().Substring(0, 8);
         var createCommand = new CreateCustomerCommand(
-            FirstName: "ToDelete",
+            FirstName: $"ToDelete-{randomId}",  // Make FirstName unique for each test run
             LastName: "User",
             DateOfBirth: new DateTime(1980, 1, 1),
             PhoneNumber: "+1111111111",
             Email: $"todelete.{Guid.NewGuid()}@example.com",
-            BankAccountNumber: "GB82WEST12345698765432"  // Changed to match working format
+            BankAccountNumber: "GB82WEST12345698765432"
         );
 
         var createResponse = await _client.PostAsJsonAsync("/api/customers", createCommand);
@@ -264,6 +265,55 @@ public class CustomersControllerTests : IClassFixture<CustomWebApplicationFactor
 
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK,
             "Customer should be accessible after restoration");
+    }
+
+    [Fact]
+    public async Task DeleteCustomer_DebugTest_ShouldShowDeletedState()
+    {
+        // Arrange - Create a customer first with unique data
+        var randomId = Guid.NewGuid().ToString().Substring(0, 8);
+        var createCommand = new CreateCustomerCommand(
+            FirstName: $"ToDelete-{randomId}",
+            LastName: "User",
+            DateOfBirth: new DateTime(1980, 1, 1),
+            PhoneNumber: "+1111111111",
+            Email: $"todelete.{Guid.NewGuid()}@example.com",
+            BankAccountNumber: "GB82WEST12345698765432"
+        );
+
+        var createResponse = await _client.PostAsJsonAsync("/api/customers", createCommand);
+        createResponse.EnsureSuccessStatusCode();
+        var customerId = await createResponse.Content.ReadFromJsonAsync<Guid>();
+
+        // Get the customer before deletion to confirm it exists
+        var getBeforeDelete = await _client.GetAsync($"/api/customers/{customerId}");
+        getBeforeDelete.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        var customerBeforeDelete = await getBeforeDelete.Content.ReadFromJsonAsync<CustomerDto>();
+        customerBeforeDelete.Should().NotBeNull();
+        customerBeforeDelete!.IsDeleted.Should().BeFalse();
+
+        // Act - Delete the customer
+        var deleteResponse = await _client.DeleteAsync($"/api/customers/{customerId}");
+        deleteResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        // Act - Try to get the deleted customer
+        var getResponse = await _client.GetAsync($"/api/customers/{customerId}");
+        
+        // Debug: Log the actual response
+        var responseContent = await getResponse.Content.ReadAsStringAsync();
+        Console.WriteLine($"After delete - Status: {getResponse.StatusCode}");
+        Console.WriteLine($"After delete - Content: {responseContent}");
+        
+        if (getResponse.StatusCode == HttpStatusCode.OK)
+        {
+            var customerAfterDelete = await getResponse.Content.ReadFromJsonAsync<CustomerDto>();
+            Console.WriteLine($"IsDeleted flag: {customerAfterDelete?.IsDeleted}");
+            Console.WriteLine($"DeletedAt: {customerAfterDelete?.DeletedAt}");
+        }
+
+        // This should be NotFound, but let's see what we actually get
+        getResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 }
 

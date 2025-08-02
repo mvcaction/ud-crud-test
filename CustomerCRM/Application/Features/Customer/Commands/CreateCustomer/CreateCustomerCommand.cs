@@ -7,7 +7,7 @@ public record CreateCustomerCommand(
     string FirstName,
     string LastName,
     DateTime DateOfBirth,
-    string PhoneNumber,
+    string PhoneNumber, // This will be the full phone number
     string Email,
     string BankAccountNumber
 ) : IRequest<Result<Guid>>;
