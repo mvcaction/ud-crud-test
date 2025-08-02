@@ -61,7 +61,7 @@ public class CustomersControllerTests : IClassFixture<CustomWebApplicationFactor
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
-    [Fact]
+    [Fact(Skip = "Test is skipped - API currently throws exception instead of returning BadRequest")]
     public async Task CreateCustomer_WithInvalidEmail_ShouldReturnBadRequest()
     {
         // Arrange
@@ -75,20 +75,14 @@ public class CustomersControllerTests : IClassFixture<CustomWebApplicationFactor
             BankAccountNumber: "GB82WEST12345698765432"
         );
 
-        // Skip this test until API properly returns BadRequest instead of throwing exception
-        // The current behavior is to throw a FluentValidation.ValidationException
-        // This is documented in the test name and will be addressed in the API code
-        Assert.True(true, "Test is skipped - API currently throws exception instead of returning BadRequest");
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/customers", command);
 
-        // The following code is kept but skipped, to document the expected behavior
-        // when the API is fixed
-        if (false)
-        {
-            var response = await _client.PostAsJsonAsync("/api/customers", command);
-            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        }
+        // Assert - This will work when the API properly returns BadRequest instead of throwing exception
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
-    [Fact]
+
+    [Fact(Skip = "Test is skipped - API currently throws exception instead of returning BadRequest")]
     public async Task CreateCustomer_WithEmptyFirstName_ShouldReturnBadRequest()
     {
         // Arrange
@@ -102,18 +96,11 @@ public class CustomersControllerTests : IClassFixture<CustomWebApplicationFactor
             BankAccountNumber: "GB82WEST12345698765432"
         );
 
-        // Skip this test until API properly returns BadRequest instead of throwing exception
-        // The current behavior is to throw a FluentValidation.ValidationException
-        // This is documented in the test name and will be addressed in the API code
-        Assert.True(true, "Test is skipped - API currently throws exception instead of returning BadRequest");
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/customers", command);
 
-        // The following code is kept but skipped, to document the expected behavior
-        // when the API is fixed
-        if (false)
-        {
-            var response = await _client.PostAsJsonAsync("/api/customers", command);
-            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        }
+        // Assert - This will work when the API properly returns BadRequest instead of throwing exception
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -147,7 +134,6 @@ public class CustomersControllerTests : IClassFixture<CustomWebApplicationFactor
         if (!raw.TrimStart().StartsWith("{") && !raw.TrimStart().StartsWith("["))
         {
             Assert.Fail($"Expected JSON response but got: {raw}");
-            return;
         }
 
         try
@@ -201,6 +187,7 @@ public class CustomersControllerTests : IClassFixture<CustomWebApplicationFactor
         // Assert - Should return NotFound due to soft delete
         getResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
+
     [Fact]
     public async Task RestoreCustomer_AfterDeletion_ShouldMakeCustomerAccessibleAgain()
     {
@@ -222,21 +209,19 @@ public class CustomersControllerTests : IClassFixture<CustomWebApplicationFactor
         {
             var content = await createResponse.Content.ReadAsStringAsync();
             Console.WriteLine($"Create response: {content}");
-
-            // Use Assert.True with false to show a descriptive message
-            Assert.True(false, $"PENDING FEATURE: Customer creation failed: {content} - Fix the database entity model first");
-            return;
+            Assert.Fail($"PENDING FEATURE: Customer creation failed: {content} - Fix the database entity model first");
         }
 
         var customerId = await createResponse.Content.ReadFromJsonAsync<Guid>();
 
-        // Rest of test unchanged...
+        // Delete the customer
         var deleteResponse = await _client.DeleteAsync($"/api/customers/{customerId}");
         deleteResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         var getDeletedResponse = await _client.GetAsync($"/api/customers/{customerId}");
         getDeletedResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
 
+        // Try to restore the customer
         HttpResponseMessage restoreResponse;
         restoreResponse = await _client.PostAsync($"/api/customers/{customerId}/restore", null);
         Console.WriteLine($"POST restore status: {restoreResponse.StatusCode}");
@@ -252,8 +237,7 @@ public class CustomersControllerTests : IClassFixture<CustomWebApplicationFactor
         if (restoreResponse.StatusCode == HttpStatusCode.NotFound)
         {
             Console.WriteLine("NOTICE: Restore endpoint not implemented yet");
-            Assert.True(false, "PENDING FEATURE: Restore endpoint not implemented yet - this test will pass when the feature is ready");
-            return;
+            Assert.Fail("PENDING FEATURE: Restore endpoint not implemented yet - this test will pass when the feature is ready");
         }
 
         restoreResponse.IsSuccessStatusCode.Should().BeTrue(
