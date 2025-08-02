@@ -4,6 +4,9 @@ using Domain.Aggregates.Customer.ValueObjects;
 
 namespace Domain.Aggregates.Customer.Rules;
 
+/// <summary>
+/// Business rule that ensures customer email addresses are unique across the system.
+/// </summary>
 public class CustomerEmailMustBeUniqueRule : IBusinessRule
 {
     private readonly Email _email;
