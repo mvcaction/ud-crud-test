@@ -22,8 +22,9 @@ public class CustomerEmailMustBeUniqueRule : IBusinessRule
 
     public bool IsBroken()
     {
-        return _uniquenessChecker.IsEmailTaken(_email.Value, _customerId)
-            .ConfigureAwait(false)
+        // Use Task.Run to execute the async method on a background thread
+        // This prevents deadlocks while maintaining the synchronous interface
+        return Task.Run(async () => await _uniquenessChecker.IsEmailTaken(_email.Value, _customerId))
             .GetAwaiter()
             .GetResult();
     }

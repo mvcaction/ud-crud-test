@@ -28,12 +28,13 @@ public class CustomerPersonalInfoMustBeUniqueRule : IBusinessRule
 
     public bool IsBroken()
     {
-        return _uniquenessChecker.IsPersonalInfoTaken(
+        // Use Task.Run to execute the async method on a background thread
+        // This prevents deadlocks while maintaining the synchronous interface
+        return Task.Run(async () => await _uniquenessChecker.IsPersonalInfoTaken(
             _firstName.Value,
             _lastName.Value,
             _dateOfBirth.Value,
-            _customerId)
-            .ConfigureAwait(false)
+            _customerId))
             .GetAwaiter()
             .GetResult();
     }
