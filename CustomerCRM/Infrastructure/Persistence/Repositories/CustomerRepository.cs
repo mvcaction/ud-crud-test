@@ -176,17 +176,15 @@ internal class CustomerRepository : ICustomerRepository
         }
     }
 
-    // Replace the Update method
     public void Update(Customer customer)
     {
         ArgumentNullException.ThrowIfNull(customer);
         
         try
         {
-            // Execute the async update synchronously since the interface expects void
-            // This is acceptable for Dapper since it executes immediately
-            var task = UpdateAsync(customer);
-            task.GetAwaiter().GetResult();
+            // Since the interface is synchronous, we need to run the async operation synchronously
+            // Using ConfigureAwait(false) to avoid potential deadlocks
+            UpdateInternalAsync(customer).ConfigureAwait(false).GetAwaiter().GetResult();
         }
         catch (Exception ex)
         {
@@ -195,52 +193,42 @@ internal class CustomerRepository : ICustomerRepository
         }
     }
 
-    // Helper method for actual async update
-    public async Task UpdateAsync(Customer customer, CancellationToken cancellationToken = default)
+    // Simplified the async method since Dapper 2.1.66 doesn't support cancellation tokens
+    private async Task UpdateInternalAsync(Customer customer)
     {
-        ArgumentNullException.ThrowIfNull(customer);
-        
-        try
-        {
-            const string sql = @"
-                UPDATE ""Customers"" SET
-                    ""FirstName"" = @FirstName,
-                    ""LastName"" = @LastName,
-                    ""DateOfBirth"" = @DateOfBirth,
-                    ""PhoneCountryCode"" = @PhoneCountryCode,
-                    ""PhoneNumber"" = @PhoneNumber,
-                    ""Email"" = @Email,
-                    ""BankAccountNumber"" = @BankAccountNumber,
-                    ""UpdatedAt"" = @UpdatedAt,
-                    ""IsDeleted"" = @IsDeleted,
-                    ""DeletedAt"" = @DeletedAt
-                WHERE ""Id"" = @Id";
+        const string sql = @"
+            UPDATE ""Customers"" SET
+                ""FirstName"" = @FirstName,
+                ""LastName"" = @LastName,
+                ""DateOfBirth"" = @DateOfBirth,
+                ""PhoneCountryCode"" = @PhoneCountryCode,
+                ""PhoneNumber"" = @PhoneNumber,
+                ""Email"" = @Email,
+                ""BankAccountNumber"" = @BankAccountNumber,
+                ""UpdatedAt"" = @UpdatedAt,
+                ""IsDeleted"" = @IsDeleted,
+                ""DeletedAt"" = @DeletedAt
+            WHERE ""Id"" = @Id";
 
-            using var connection = new NpgsqlConnection(_connectionString);
-            var rowsAffected = await connection.ExecuteAsync(sql, new
-            {
-                customer.Id,
-                FirstName = customer.FirstName.Value,
-                LastName = customer.LastName.Value,
-                DateOfBirth = customer.DateOfBirth.Value,
-                PhoneCountryCode = customer.PhoneNumber.CountryCode,
-                PhoneNumber = customer.PhoneNumber.Number,
-                Email = customer.Email.Value,
-                BankAccountNumber = customer.BankAccountNumber.Value,
-                customer.UpdatedAt,
-                customer.IsDeleted,
-                customer.DeletedAt
-            });
-
-            if (rowsAffected == 0)
-            {
-                throw new InvalidOperationException($"Customer with ID {customer.Id} was not found for update.");
-            }
-        }
-        catch (Exception ex)
+        using var connection = new NpgsqlConnection(_connectionString);
+        var rowsAffected = await connection.ExecuteAsync(sql, new
         {
-            _logger.LogError(ex, "Error updating customer {CustomerId}", customer.Id);
-            throw;
+            customer.Id,
+            FirstName = customer.FirstName.Value,
+            LastName = customer.LastName.Value,
+            DateOfBirth = customer.DateOfBirth.Value,
+            PhoneCountryCode = customer.PhoneNumber.CountryCode,
+            PhoneNumber = customer.PhoneNumber.Number,
+            Email = customer.Email.Value,
+            BankAccountNumber = customer.BankAccountNumber.Value,
+            customer.UpdatedAt,
+            customer.IsDeleted,
+            customer.DeletedAt
+        });
+
+        if (rowsAffected == 0)
+        {
+            throw new InvalidOperationException($"Customer with ID {customer.Id} was not found for update.");
         }
     }
 
